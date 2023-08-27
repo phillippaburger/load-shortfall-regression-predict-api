@@ -24,6 +24,7 @@
 # Helper Dependencies
 import numpy as np
 import pandas as pd
+import sklearn
 import pickle
 import json
 
@@ -58,10 +59,30 @@ def _preprocess_data(data):
     # ---------------------------------------------------------------
 
     # ----------- Replace this code with your own preprocessing steps --------
-    predict_vector = feature_vector_df[['Madrid_wind_speed','Bilbao_rain_1h','Valencia_wind_speed']]
+    
+    df_te = data.copy()
+    df_te['Valencia_pressure'] = df_te['Valencia_pressure'].fillna(df_clean['Valencia_pressure'].mode()[0])
+    df_te['time'] = pd.to_datetime(df_te['time'])
+    df_te['Day'] = df_te['time'].dt.day
+    df_te['Month'] = df_te['time'].dt.month
+    df_te['Year'] = df_te['time'].dt.year
+    df_te['Hour'] = df_te['time'].dt.hour
+    df_te['Start_minute'] = df_te['time'].dt.minute
+    df_te['Start_seconds'] = df_te['time'].dt.second
+    df_te['Start_weekend'] = df_te['time'].dt.weekday
+    df_te['Start_week_of_year'] = df_te['time'].dt.isocalendar().week
+    df_te['Valencia_wind_deg'] = df_te['Valencia_wind_deg'].str.extract('(\d+)')
+    df_te['Valencia_wind_deg'] = pd.to_numeric(df_te['Valencia_wind_deg'])
+    df_te['Seville_pressure'] = df_te['Seville_pressure'].str.extract('(\d+)')
+    df_te['Seville_pressure'] = pd.to_numeric(df_te['Seville_pressure'])
+    df_te = df_te.drop(['Unnamed: 0', 'time'], axis=1)
+    X_te = df_te
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X_te)
+
     # ------------------------------------------------------------------------
 
-    return predict_vector
+    return X_scaled
 
 def load_model(path_to_model:str):
     """Adapter function to load our pretrained model into memory.
